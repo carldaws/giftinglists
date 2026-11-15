@@ -25,7 +25,7 @@ class User < ApplicationRecord
   end
 
   AVATAR_TONES = %w[ clay sage honey plum ].freeze
-  AVATAR_CHARACTERS = %w[ tree gift santa snowman snowflake bow bell teddy cake balloon popper star pumpkin ghost leaf heart chick rabbit shamrock lantern diya penguin fox owl ].freeze
+  AVATAR_CHARACTERS = %w[ tree gift santa snowman snowflake bow bell teddy cake balloon popper star pumpkin ghost leaf heart chick rabbit shamrock lantern diya penguin fox owl ginger_cat white_cat dog hamster fish parrot horse tortoise ].freeze
 
   normalizes :email_address, with: ->(email_address) { email_address.strip.downcase.presence }
   normalizes :avatar_character, with: ->(character) { character.presence }
