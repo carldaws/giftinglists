@@ -389,6 +389,14 @@ en:
           penguin: Penguin
           fox: Fox
           owl: Owl
+          ginger_cat: Ginger cat
+          white_cat: White cat
+          dog: Dog
+          hamster: Hamster
+          fish: Fish
+          parrot: Parrot
+          horse: Horse
+          tortoise: Tortoise
         email_address: Email address
         password_challenge: Current password
         password_challenge_hint: Only needed if you're changing your email address.
