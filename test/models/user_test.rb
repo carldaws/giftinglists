@@ -174,21 +174,21 @@ class UserTest < ActiveSupport::TestCase
 
   test "your shopping list splits what's still to buy from what's bought" do
     items(:socks).reserve_for(users(:carol))
-    shopping_list = users(:carol).shopping_list
+    shopping = users(:carol).shopping
 
-    assert_equal [ items(:socks) ], shopping_list.to_buy.map(&:item)
-    assert_equal [ reservations(:carol_bought_lego) ], shopping_list.bought
+    assert_equal [ items(:socks) ], shopping.to_buy.map(&:item)
+    assert_equal [ reservations(:carol_bought_lego) ], shopping.bought
   end
 
   test "gifts already given are off your shopping list" do
     reservations(:carol_bought_lego).update_columns(occasion_id: occasions(:christmas).id)
     occasions(:christmas).update_columns(date: 1.day.ago)
 
-    assert_not users(:carol).shopping_list.any?
+    assert_not users(:carol).shopping.any?
   end
 
   test "there's nothing on your shopping list until you've picked something" do
-    assert_not users(:erin).shopping_list.any?
+    assert_not users(:erin).shopping.any?
   end
 
   test "counts the different occasions someone has bought gifts for" do

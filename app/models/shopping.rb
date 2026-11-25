@@ -1,4 +1,4 @@
-class ShoppingList
+class Shopping
   include Enumerable
 
   def initialize(user)

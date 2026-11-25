@@ -84,6 +84,6 @@ class UserDeletionTest < ActiveSupport::TestCase
 
     assert_not Item.exists?(unpicked.id)
     assert items(:scarf_gloves_suggestion).reload.removed?
-    assert_includes users(:carol).shopping_list.map(&:item), items(:scarf_gloves_suggestion)
+    assert_includes users(:carol).shopping.map(&:item), items(:scarf_gloves_suggestion)
   end
 end

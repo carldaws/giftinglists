@@ -157,7 +157,7 @@ class ShareTest < ActiveSupport::TestCase
     groups(:hollies).memberships.find_by!(user: users(:carol)).destroy
 
     assert_not @split.reload.waiting?
-    assert_includes users(:alice).shopping_list, @split
+    assert_includes users(:alice).shopping, @split
   end
 
   test "someone who stops looking after a person leaves their splits" do
@@ -225,8 +225,8 @@ class ShareTest < ActiveSupport::TestCase
     assert_equal users(:bob), @split.user
     assert_equal [ users(:carol) ], @split.sharers
     assert @split.bought?
-    assert_includes users(:bob).shopping_list, @split
-    assert_includes users(:carol).shopping_list, @split
+    assert_includes users(:bob).shopping, @split
+    assert_includes users(:carol).shopping, @split
   end
 
   test "deleting your account hands your splits to the first person who joined" do

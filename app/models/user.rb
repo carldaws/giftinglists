@@ -100,8 +100,8 @@ class User < ApplicationRecord
     dependants.where.not(id: group.memberships.select(:user_id))
   end
 
-  def shopping_list
-    ShoppingList.new(self)
+  def shopping
+    Shopping.new(self)
   end
 
   def occasions_bought_for

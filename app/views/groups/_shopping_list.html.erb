@@ -1,12 +1,12 @@
-<%# locals: (shopping_list:) %>
-<% if shopping_list.any? %>
+<%# locals: (shopping:) %>
+<% if shopping.any? %>
   <section id="shopping-list" aria-labelledby="shopping-list-heading" class="section">
     <%= section_header t(".heading"), id: "shopping-list-heading" %>
 
     <div class="card card--flush">
-      <% if shopping_list.to_buy.any? %>
+      <% if shopping.to_buy.any? %>
         <ul class="list">
-          <% shopping_list.to_buy.each do |reservation| %>
+          <% shopping.to_buy.each do |reservation| %>
             <li class="row">
               <%= avatar_tag reservation.item.owner %>
               <div class="min-w-0 flex-1">
@@ -34,13 +34,13 @@
         <p class="row empty"><%= t(".all_bought") %></p>
       <% end %>
 
-      <% if shopping_list.bought.any? %>
+      <% if shopping.bought.any? %>
         <details class="border-t border-line">
           <summary class="row row--link cursor-pointer list-none font-semibold [&::-webkit-details-marker]:hidden">
-            <%= t(".bought_count", count: shopping_list.bought.size) %>
+            <%= t(".bought_count", count: shopping.bought.size) %>
           </summary>
           <ul class="list border-t border-line">
-            <% shopping_list.bought.each do |reservation| %>
+            <% shopping.bought.each do |reservation| %>
               <li class="row">
                 <div class="min-w-0 flex-1">
                   <p class="text-muted line-through"><%= reservation.item.title %></p>
