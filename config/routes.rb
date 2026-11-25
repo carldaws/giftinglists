@@ -41,13 +41,18 @@ Rails.application.routes.draw do
 
   resources :items, only: %i[ edit update destroy ] do
     scope module: :items do
-      resource :reservation, only: %i[ create update destroy ]
+      resource :reservation, only: %i[ create update ]
       resources :splits, only: [] do
         resource :share, only: %i[ create destroy ], module: :splits
       end
-      resource :purchase, only: %i[ create destroy ]
       resource :receipt, only: %i[ create destroy ]
       resources :photos, only: :destroy
+    end
+  end
+
+  resources :reservations, only: :destroy do
+    scope module: :reservations do
+      resource :purchase, only: %i[ create destroy ]
     end
   end
 

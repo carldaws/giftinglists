@@ -21,10 +21,4 @@ class Items::ReservationsController < ApplicationController
       redirect_back_or_to_list alert: reservation.errors.full_messages.to_sentence
     end
   end
-
-  def destroy
-    Current.user.reservations.find_by!(item: @item).destroy
-    track_event "reservation-cancelled"
-    redirect_back_or_to_list
-  end
 end

@@ -97,30 +97,32 @@ class SplitsTest < ActionDispatch::IntegrationTest
   end
 
   test "calling off a split frees the item" do
-    @kite.reserve_for(users(:alice), split_with: 2).join(users(:bob))
+    split = @kite.reserve_for(users(:alice), split_with: 2)
+    split.join(users(:bob))
     sign_in_as users(:alice)
 
-    delete item_reservation_path(@kite)
+    delete reservation_path(split)
 
     assert_not @kite.reservations.exists?
     assert_empty users(:bob).shares
   end
 
   test "ticking off a split that someone just left explains why it can't be bought yet" do
-    @kite.reserve_for(users(:alice), split_with: 1)
+    split = @kite.reserve_for(users(:alice), split_with: 1)
     sign_in_as users(:alice)
 
-    post item_purchase_path(@kite)
+    post reservation_purchase_path(split)
 
     assert_equal I18n.t("activerecord.errors.messages.split_incomplete"), flash[:alert]
     assert_not @kite.reservations.first.bought?
   end
 
-  test "only the person who started a split ticks it off as bought" do
-    @kite.reserve_for(users(:alice), split_with: 1).join(users(:bob))
+  test "people who joined a split don't tick it off as bought" do
+    split = @kite.reserve_for(users(:alice), split_with: 1)
+    split.join(users(:bob))
     sign_in_as users(:bob)
 
-    post item_purchase_path(@kite)
+    post reservation_purchase_path(split)
 
     assert_response :not_found
   end

@@ -106,6 +106,10 @@ class User < ApplicationRecord
     dependants.where.not(id: group.memberships.select(:user_id))
   end
 
+  def shopping_list_reservations
+    Reservation.visible_to(self).where(shopping_list: shopping_lists)
+  end
+
   def shopping_lists_for_gifts_to(person)
     shopping_lists.for_gifts_to(person).own_first.by_name.includes(:people)
   end
@@ -119,7 +123,7 @@ class User < ApplicationRecord
   end
 
   def occasions_bought_for
-    reservations.where.not(bought_at: nil).distinct.count(:occasion_id)
+    Reservation.where(shopping_list: shopping_lists).where.not(bought_at: nil).distinct.count(:occasion_id)
   end
 
   def lists

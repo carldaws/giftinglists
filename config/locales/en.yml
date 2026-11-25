@@ -116,6 +116,7 @@ en:
       for_occasion: For %{name} · %{occasion}, %{countdown}
       their_occasion: "%{occasion}, %{countdown}"
       already_has: "%{name} has ticked this off, so they may already have it."
+      picked: "%{list} · %{name} picked this"
       removed: No longer on the list.
       bought: Bought
       let_go: Let it go

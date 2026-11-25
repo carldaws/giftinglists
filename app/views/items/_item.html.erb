@@ -110,13 +110,13 @@
             <% end %>
           <% elsif card.my_reservation.bought? %>
             <% unless card.my_reservation.given? %>
-              <%= button_to t(".not_bought"), item_purchase_path(card.item), method: :delete, class: "button button--secondary button--small" %>
+              <%= button_to t(".not_bought"), reservation_purchase_path(card.my_reservation), method: :delete, class: "button button--secondary button--small" %>
             <% end %>
           <% elsif card.my_reservation.waiting? %>
-            <%= button_to t(".call_off_split"), item_reservation_path(card.item), method: :delete, class: "button button--secondary button--small" %>
+            <%= button_to t(".call_off_split"), reservation_path(card.my_reservation), method: :delete, class: "button button--secondary button--small" %>
           <% else %>
-            <%= button_to t(".bought_it"), item_purchase_path(card.item), class: "button button--small" %>
-            <%= button_to t(".let_go"), item_reservation_path(card.item), method: :delete, class: "button button--secondary button--small" %>
+            <%= button_to t(".bought_it"), reservation_purchase_path(card.my_reservation), class: "button button--small" %>
+            <%= button_to t(".let_go"), reservation_path(card.my_reservation), method: :delete, class: "button button--secondary button--small" %>
           <% end %>
         <% end %>
 

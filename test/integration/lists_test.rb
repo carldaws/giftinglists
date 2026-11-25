@@ -410,15 +410,15 @@ class ListsTest < ActionDispatch::IntegrationTest
     sign_in_as users(:carol)
 
     post item_reservation_path(items(:socks))
-    assert items(:socks).reservations.exists?(user: users(:carol))
+    reservation = items(:socks).reservations.find_by!(user: users(:carol))
 
-    post item_purchase_path(items(:socks))
-    assert items(:socks).reservations.find_by(user: users(:carol)).bought?
+    post reservation_purchase_path(reservation)
+    assert reservation.reload.bought?
 
-    delete item_purchase_path(items(:socks))
-    assert_not items(:socks).reservations.find_by(user: users(:carol)).bought?
+    delete reservation_purchase_path(reservation)
+    assert_not reservation.reload.bought?
 
-    delete item_reservation_path(items(:socks))
+    delete reservation_path(reservation)
     assert_not items(:socks).reservations.exists?(user: users(:carol))
   end
 
@@ -527,23 +527,23 @@ class ListsTest < ActionDispatch::IntegrationTest
     get root_path
 
     assert_select "#shopping-list details", text: /#{I18n.t("groups.shopping_list.removed")}/
-    assert_select "#shopping-list details form[action=?]", item_reservation_path(items(:scarf))
+    assert_select "#shopping-list details form[action=?]", reservation_path(reservations(:bob_reserved_scarf))
   end
 
   test "a removed item is forgotten once the last person lets it go" do
-    items(:socks).reserve_for(users(:bob))
-    items(:socks).reserve_for(users(:carol))
+    bobs = items(:socks).reserve_for(users(:bob))
+    carols = items(:socks).reserve_for(users(:carol))
     items(:socks).remove
 
     sign_in_as users(:bob)
     assert_no_difference -> { Item.count } do
-      delete item_reservation_path(items(:socks))
+      delete reservation_path(bobs)
     end
 
     delete session_path
     sign_in_as users(:carol)
     assert_difference -> { Item.count }, -1 do
-      delete item_reservation_path(items(:socks))
+      delete reservation_path(carols)
     end
   end
 
@@ -561,7 +561,7 @@ class ListsTest < ActionDispatch::IntegrationTest
     sign_in_as users(:bob)
 
     assert_difference -> { Item.count }, -1 do
-      delete item_reservation_path(items(:scarf))
+      delete reservation_path(reservations(:bob_reserved_scarf))
     end
   end
 

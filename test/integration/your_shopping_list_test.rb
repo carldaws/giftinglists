@@ -30,7 +30,7 @@ class YourShoppingListTest < ActionDispatch::IntegrationTest
   test "ticking something off as bought takes you back to your list and moves it down" do
     sign_in_as users(:bob)
 
-    post item_purchase_path(items(:scarf)), headers: { "HTTP_REFERER" => root_url }
+    post reservation_purchase_path(reservations(:bob_reserved_scarf)), headers: { "HTTP_REFERER" => root_url }
     assert_redirected_to root_url
 
     follow_redirect!
@@ -42,7 +42,7 @@ class YourShoppingListTest < ActionDispatch::IntegrationTest
     reservations(:bob_reserved_scarf).buy
     sign_in_as users(:bob)
 
-    delete item_purchase_path(items(:scarf)), headers: { "HTTP_REFERER" => root_url }
+    delete reservation_purchase_path(reservations(:bob_reserved_scarf)), headers: { "HTTP_REFERER" => root_url }
 
     assert_redirected_to root_url
     assert_not reservations(:bob_reserved_scarf).reload.bought?
@@ -55,7 +55,7 @@ class YourShoppingListTest < ActionDispatch::IntegrationTest
     get root_path
 
     assert_select "#shopping-list p", text: I18n.t("groups.shopping_list.already_has", name: users(:alice).name)
-    assert_select "#shopping-list form[action=?]", item_reservation_path(items(:scarf))
+    assert_select "#shopping-list form[action=?]", reservation_path(reservations(:bob_reserved_scarf))
   end
 
   test "gifts that have been given drop off the list" do

@@ -203,6 +203,20 @@ class UserTest < ActiveSupport::TestCase
     assert_equal [ reservations(:carol_bought_lego) ], shopping.bought
   end
 
+  test "your shopping list knows which picks are yours to tick off and which you joined through a list" do
+    us = users(:carol).start_shopping_list(name: "Us", person_ids: [ users(:bob).id ])
+    kite = users(:dan).items.create!(name: "Kite")
+    split = kite.reserve_for(users(:alice), split_with: 1)
+    share = split.join(users(:bob), shopping_list: us)
+    socks = items(:socks).reserve_for(users(:bob), shopping_list: us)
+    shopping = users(:carol).shopping
+
+    assert shopping.joined?(split)
+    assert_equal share, shopping.pick_for(split)
+    assert_not shopping.joined?(socks)
+    assert_equal socks, shopping.pick_for(socks)
+  end
+
   test "gifts already given are off your shopping list" do
     reservations(:carol_bought_lego).update_columns(occasion_id: occasions(:christmas).id)
     occasions(:christmas).update_columns(date: 1.day.ago)

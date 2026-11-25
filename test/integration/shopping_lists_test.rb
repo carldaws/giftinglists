@@ -182,6 +182,98 @@ class ShoppingListsTest < ActionDispatch::IntegrationTest
     assert_equal us, split.shares.find_by!(user: users(:carol)).shopping_list
   end
 
+  test "your shopping list shows what everyone on your lists has picked, and who picked it" do
+    us = users(:alice).start_shopping_list(name: "Us", person_ids: [ users(:bob).id ])
+    items(:books).reserve_for(users(:bob), shopping_list: us)
+    sign_in_as users(:alice)
+
+    get root_path
+
+    assert_select "#shopping-list a", text: items(:books).name
+    assert_select "#shopping-list p", text: I18n.t("groups.shopping_list.picked", list: us.name, name: users(:bob).name)
+  end
+
+  test "anyone on a list can tick off what's on it, and put it back" do
+    us = users(:alice).start_shopping_list(name: "Us", person_ids: [ users(:bob).id ])
+    reservation = items(:books).reserve_for(users(:bob), shopping_list: us)
+    sign_in_as users(:alice)
+
+    get root_path
+    assert_select "#shopping-list form[action=?]", reservation_purchase_path(reservation)
+
+    post reservation_purchase_path(reservation)
+    assert reservation.reload.bought?
+
+    delete reservation_purchase_path(reservation)
+    assert_not reservation.reload.bought?
+  end
+
+  test "anyone on a list can let go of something on it" do
+    us = users(:alice).start_shopping_list(name: "Us", person_ids: [ users(:bob).id ])
+    reservation = items(:books).reserve_for(users(:bob), shopping_list: us)
+    sign_in_as users(:alice)
+
+    delete reservation_path(reservation)
+
+    assert_not Reservation.exists?(reservation.id)
+  end
+
+  test "people who aren't on a list can't tick off what's on it" do
+    us = users(:alice).start_shopping_list(name: "Us", person_ids: [ users(:bob).id ])
+    reservation = items(:books).reserve_for(users(:bob), shopping_list: us)
+    reservation.buy
+    sign_in_as users(:erin)
+
+    post reservation_purchase_path(reservation)
+    assert_response :not_found
+
+    delete reservation_purchase_path(reservation)
+    assert_response :not_found
+
+    delete reservation_path(reservation)
+    assert_response :not_found
+    assert reservation.reload.bought?
+  end
+
+  test "anyone on a list can leave a split that someone on it joined" do
+    us = users(:carol).start_shopping_list(name: "Us", person_ids: [ users(:bob).id ])
+    kite = users(:dan).items.create!(name: "Kite")
+    split = kite.reserve_for(users(:alice), split_with: 1)
+    split.join(users(:bob), shopping_list: us)
+    sign_in_as users(:carol)
+
+    get root_path
+    assert_select "#shopping-list li button", text: I18n.t("groups.shopping_list.leave_split")
+
+    delete item_split_share_path(kite, split)
+
+    assert_empty split.reload.shares
+  end
+
+  test "anyone on a list can call off a split on it that's still waiting" do
+    us = users(:carol).start_shopping_list(name: "Us", person_ids: [ users(:bob).id ])
+    split = users(:dan).items.create!(name: "Kite").reserve_for(users(:bob), split_with: 1, shopping_list: us)
+    sign_in_as users(:carol)
+
+    get root_path
+    assert_select "#splits form[action=?]", reservation_path(split)
+
+    delete reservation_path(split)
+
+    assert_not Reservation.exists?(split.id)
+  end
+
+  test "only whoever picked something changes which occasion it's for" do
+    us = users(:alice).start_shopping_list(name: "Us", person_ids: [ users(:bob).id ])
+    reservation = items(:books).reserve_for(users(:bob), shopping_list: us)
+    sign_in_as users(:alice)
+
+    assert_no_changes -> { reservation.reload.occasion } do
+      patch item_reservation_path(items(:books)), params: { reservation: { occasion_id: "" } }
+    end
+    assert_response :not_found
+  end
+
   test "renaming a list" do
     list = users(:alice).start_shopping_list(name: "Us")
     sign_in_as users(:alice)

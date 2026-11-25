@@ -42,6 +42,12 @@ module GroupsHelper
     end
   end
 
+  def shopping_list_pick_tag(pick)
+    unless pick.shopping_list.own?
+      tag.p(t("groups.shopping_list.picked", list: pick.shopping_list.name, name: names_of([ pick.user ])), class: "row-meta")
+    end
+  end
+
   def shopping_list_note_tag(reservation)
     item = reservation.item
 

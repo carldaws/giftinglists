@@ -6,7 +6,7 @@
   <%= render "groups/your_lists", lists: Current.user.lists %>
   <%= render "messages/unread", chats: Current.user.unread_chats %>
   <%= render "occasions/gifts_to_choose", choices: Current.user.gifts_to_choose %>
-  <%= render "groups/splits", splits: Current.user.splits_waiting %>
+  <%= render "groups/splits", splits: Current.user.splits_waiting, shopping: Current.user.shopping %>
   <%= render "groups/shopping_list", shopping: Current.user.shopping %>
 
   <section aria-labelledby="groups-heading" class="section">

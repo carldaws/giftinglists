@@ -15,7 +15,7 @@ class Items::Splits::SharesController < ApplicationController
   end
 
   def destroy
-    share = @split.shares.find_by!(user: Current.user)
+    share = @split.shares.find_by!(shopping_list: Current.user.shopping_lists)
     share.leave
 
     if share.destroyed?
