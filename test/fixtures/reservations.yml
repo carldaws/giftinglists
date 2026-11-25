@@ -1,8 +1,10 @@
 bob_reserved_scarf:
   item: scarf
   user: bob
+  shopping_list: bobs
 
 carol_bought_lego:
   item: lego
   user: carol
+  shopping_list: carols
   bought_at: <%= 2.days.ago.to_fs(:db) %>

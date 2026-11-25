@@ -12,6 +12,7 @@ module Reservation::Splittable
 
     scope :splits, -> { where.not(split_with: nil) }
     scope :involving, ->(user) { where(user:).or(where(id: Share.where(user:).select(:reservation_id))) }
+    scope :on, ->(shopping_lists) { where(shopping_list: shopping_lists).or(where(id: Share.where(shopping_list: shopping_lists).select(:reservation_id))) }
   end
 
   def split?
@@ -56,7 +57,7 @@ module Reservation::Splittable
     if successor.present?
       transaction do
         successor.destroy!
-        update!(user: successor.user)
+        update!(user: successor.user, shopping_list: successor.shopping_list)
       end
     end
   end

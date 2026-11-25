@@ -20,7 +20,7 @@ class Shopping
   private
     def reservations
       @reservations ||= begin
-        reservations = Reservation.visible_to(@user).involving(@user).includes(:user, :shares, :sharers, occasion: :person, item: :owner).reject { it.waiting? || it.given? }
+        reservations = Reservation.visible_to(@user).on(@user.shopping_lists).includes(:user, :shares, :sharers, occasion: :person, item: :owner).reject { it.waiting? || it.given? }
         dated, undated = reservations.partition { it.occasion.present? }
 
         dated.sort_by { [ it.occasion.date, it.item.owner.name.downcase ] } + undated.sort_by { it.item.owner.name.downcase }

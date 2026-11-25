@@ -98,6 +98,10 @@ class ReservationTest < ActiveSupport::TestCase
     end
   end
 
+  test "what you reserve goes on your own shopping list" do
+    assert_equal shopping_lists(:carols), items(:socks).reserve_for(users(:carol)).shopping_list
+  end
+
   test "buying" do
     reservations(:bob_reserved_scarf).buy
     assert reservations(:bob_reserved_scarf).bought?

@@ -124,6 +124,29 @@ class UserTest < ActiveSupport::TestCase
     assert_empty users(:dan).guardians
   end
 
+  test "people who sign in have their own shopping list, with only them on it" do
+    fern = User.create!(name: "Fern", email_address: "fern@example.com", password: "a long enough password")
+
+    assert_equal [ fern ], fern.own_shopping_list.people
+    assert_equal [ fern.own_shopping_list ], fern.shopping_lists
+  end
+
+  test "a dependant gets their own shopping list once they set up their account" do
+    assert_nil users(:dan).own_shopping_list
+
+    save_credentials(users(:dan), email_address: "dan@example.com", password: "a brand new password")
+
+    assert_equal [ users(:dan) ], users(:dan).reload.own_shopping_list.people
+  end
+
+  test "changing your email address keeps the same shopping list" do
+    list = users(:alice).own_shopping_list
+
+    users(:alice).update!(email_address: "alice@example.org", password_challenge: FixturePasswords::PASSWORD)
+
+    assert_equal list, users(:alice).reload.own_shopping_list
+  end
+
   test "a dependant setting up their own account needs an email address" do
     assert_not save_credentials(users(:dan), email_address: "", password: "a brand new password")
     assert_not_empty users(:dan).reload.guardians

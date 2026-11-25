@@ -9,6 +9,9 @@ class User < ApplicationRecord
   has_many :sizes, dependent: :destroy
   has_many :reservations, dependent: :destroy
   has_many :shares, dependent: :destroy
+  has_many :shoppers, dependent: :destroy
+  has_many :shopping_lists, through: :shoppers
+  has_one :own_shopping_list, class_name: "ShoppingList", dependent: :destroy, inverse_of: :user
   has_many :readings, dependent: :destroy
   has_many :suggestions, class_name: "Item", foreign_key: :suggested_by_id, inverse_of: :suggested_by, dependent: :destroy
   has_many :authored_messages, class_name: "Message", foreign_key: :author_id, inverse_of: :author
@@ -44,6 +47,7 @@ class User < ApplicationRecord
 
   after_update :stop_being_looked_after, if: -> { saved_change_to_email_address? && signs_in? }
   after_update :sign_out_everywhere, if: :saved_change_to_password_digest?
+  after_save :open_own_shopping_list, if: -> { saved_change_to_email_address?(from: nil) }
 
   scope :by_name, -> { order(Arel.sql("lower(users.name)")) }
   scope :visible_to, ->(user) do
@@ -121,7 +125,7 @@ class User < ApplicationRecord
 
   def splits_waiting
     splits = Reservation.visible_to(self).splits.unbought
-    splits.involving(self).or(splits.where.not(item: Item.where(owner: dependants)))
+    splits.on(shopping_lists).or(splits.where.not(item: Item.where(owner: dependants)))
       .includes(:user, :shares, :sharers, item: [ :owner, { reservations: %i[ user sharers ] } ]).order(:created_at).select(&:waiting?)
   end
 
@@ -147,7 +151,7 @@ class User < ApplicationRecord
   end
 
   def people_chosen_for(occasion)
-    picks = Reservation.involving(self).where(occasion:).joins(:item)
+    picks = Reservation.on(shopping_lists).where(occasion:).joins(:item)
     User.where(id: picks.merge(Item.listed).or(picks.where.not(bought_at: nil)).select("items.owner_id"))
   end
 
@@ -176,6 +180,10 @@ class User < ApplicationRecord
 
     def sign_out_everywhere
       sessions.destroy_all
+    end
+
+    def open_own_shopping_list
+      create_own_shopping_list!(people: [ self ])
     end
 
     def email_change_is_confirmed_with_password

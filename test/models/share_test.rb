@@ -59,6 +59,10 @@ class ShareTest < ActiveSupport::TestCase
     assert share.errors.of_kind?(:base, :split_full)
   end
 
+  test "joining a split puts your share on your own shopping list" do
+    assert_equal shopping_lists(:bobs), @split.join(users(:bob)).shopping_list
+  end
+
   test "the person who started a split can't join it" do
     share = @split.join(users(:alice))
 
@@ -223,6 +227,7 @@ class ShareTest < ActiveSupport::TestCase
 
     @split.reload
     assert_equal users(:bob), @split.user
+    assert_equal shopping_lists(:bobs), @split.shopping_list
     assert_equal [ users(:carol) ], @split.sharers
     assert @split.bought?
     assert_includes users(:bob).shopping, @split
@@ -235,6 +240,7 @@ class ShareTest < ActiveSupport::TestCase
     users(:alice).delete_account
 
     assert_equal users(:bob), @split.reload.user
+    assert_equal shopping_lists(:bobs), @split.shopping_list
     assert_empty @split.sharers
   end
 

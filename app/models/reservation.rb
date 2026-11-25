@@ -2,6 +2,7 @@ class Reservation < ApplicationRecord
   belongs_to :item
   belongs_to :user
   belongs_to :occasion, optional: true
+  belongs_to :shopping_list, default: -> { user.own_shopping_list if user.present? }
 
   delegate :kind, to: :occasion, prefix: true, allow_nil: true
 

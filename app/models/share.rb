@@ -1,6 +1,7 @@
 class Share < ApplicationRecord
   belongs_to :reservation
   belongs_to :user
+  belongs_to :shopping_list, default: -> { user.own_shopping_list if user.present? }
 
   validate :reservation_is_a_split, :user_can_split_it, if: -> { reservation.present? && user.present? }
   validate :split_has_room, :split_is_not_bought, :item_is_still_wanted, :user_is_not_already_getting_it, on: :create, if: -> { reservation.present? && errors.none? }

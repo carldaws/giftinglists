@@ -1,0 +1,15 @@
+alice_on_alices:
+  shopping_list: alices
+  user: alice
+
+bob_on_bobs:
+  shopping_list: bobs
+  user: bob
+
+carol_on_carols:
+  shopping_list: carols
+  user: carol
+
+erin_on_erins:
+  shopping_list: erins
+  user: erin

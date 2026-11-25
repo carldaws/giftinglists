@@ -10,6 +10,14 @@ class UserDeletionTest < ActiveSupport::TestCase
     assert_equal name, items(:lego).reload.released_by_name
   end
 
+  test "your own shopping list goes with your account" do
+    list = users(:carol).own_shopping_list
+
+    users(:carol).delete_account
+
+    assert_not ShoppingList.exists?(list.id)
+  end
+
   test "a gift that was already given counts as received" do
     reservations(:carol_bought_lego).update!(occasion: occasions(:christmas))
     occasions(:christmas).update!(date: 1.week.ago.to_date)
