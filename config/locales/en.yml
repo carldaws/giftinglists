@@ -18,6 +18,7 @@ en:
       label: Your account
       your_page: Your page
       your_details: Your details
+      shopping_lists: Shopping lists
       sign_out: Sign out
     signed_out_nav:
       sign_in: Sign in
@@ -547,6 +548,44 @@ en:
       create:
         received: "%{name} ticked off. It's in your received list if you change your mind."
 
+  shopping_lists:
+    index:
+      heading: Shopping lists
+      intro: Share a shopping list with the people you buy gifts with, like a partner. Everyone on it sees what's on it and can tick things off.
+      new: New shopping list
+      empty: You're not sharing a shopping list with anyone yet.
+      rename: Rename
+      you: (you)
+      leave: Leave
+      leave_confirm: Leave %{list}? Anything you picked for it moves to your own list.
+      remove: Remove
+      remove_confirm: Take %{name} off %{list}? Anything they picked for it moves to their own list.
+      add_label: Someone to add to %{list}
+      add_prompt: Add someone…
+      add: Add
+    form:
+      name: Name
+      name_hint: Anything you like, such as Us, or Christmas with Mum.
+      people: Who's it with?
+      people_hint: You can add people later too.
+    new:
+      heading: New shopping list
+      intro: Everyone on it will see what's on it and can tick things off.
+      submit: Make the list
+    create:
+      created: "%{list} is ready."
+    edit:
+      heading: Rename shopping list
+      submit: Save
+    update:
+      renamed: Shopping list renamed.
+    shoppers:
+      create:
+        added: Added %{name} to %{list}.
+      destroy:
+        left: You've left %{list}.
+        removed: Took %{name} off %{list}.
+
   joins:
     rate_limited: Too many tries. Please wait a few minutes and try again.
     new:
@@ -776,6 +815,9 @@ en:
         split_incomplete: Wait until everyone has joined the split before buying it.
         too_large: must be smaller than %{size}
         name_or_link: Add a name or a link, so everyone knows what it is.
+        someone_elses_own_list: Only you can be on your own shopping list.
+        cannot_join: "%{name} can't join this list. It has gifts for them, or for people outside their groups, or people on it they aren't in a group with."
+        strangers: Everyone on a shopping list needs to be in a group with everyone else on it.
       models:
         user:
           attributes:

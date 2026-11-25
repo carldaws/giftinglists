@@ -26,3 +26,7 @@ events:
   item-bought: Someone bought something they'd picked, what kind of occasion it's for, and how many occasions they've bought for.
   purchase-undone: Someone marked something as not bought after all.
   item-received: Someone said they'd received something.
+  shopping-list-created: Someone made a shopping list to share, and how many people are on it.
+  shopper-added: Someone added a person to a shared shopping list.
+  shopping-list-left: Someone left a shared shopping list.
+  shopper-removed: Someone took a person off a shared shopping list.

@@ -55,11 +55,13 @@ class User < ApplicationRecord
       .or(where(id: user.id))
       .or(where(id: user.guardianships.select(:dependant_id)))
   end
+  scope :who_can_see, ->(person) do
+    where(id: Membership.where(group_id: person.memberships.select(:group_id)).select(:user_id))
+      .or(where(id: person.id))
+      .or(where(id: person.guardianships_as_dependant.select(:guardian_id)))
+  end
   scope :who_can_split_gifts_to, ->(owner, with:) do
-    where(id: Membership.where(group_id: owner.memberships.select(:group_id)).select(:user_id))
-      .or(where(id: owner.guardianships_as_dependant.select(:guardian_id)))
-      .where.not(email_address: nil)
-      .where.not(id: [ owner.id, with.id ])
+    who_can_see(owner).where.not(email_address: nil).where.not(id: [ owner.id, with.id ])
   end
 
   def visible_to?(user)
@@ -104,6 +106,10 @@ class User < ApplicationRecord
     dependants.where.not(id: group.memberships.select(:user_id))
   end
 
+  def possible_shoppers
+    User.visible_to(self).where.not(email_address: nil).where.not(id:)
+  end
+
   def shopping
     Shopping.new(self)
   end
@@ -130,6 +136,8 @@ class User < ApplicationRecord
   end
 
   def drop_gifts_no_longer_visible
+    shoppers.on_shared_lists.includes(:shopping_list).reject(&:can_see_everyone?).each(&:leave)
+    shopping_lists.shared.each { it.hand_back_gifts_hidden_from(self) }
     reservations.where.not(item: Item.visible_to(self)).find_each(&:give_up)
     shares.where.not(reservation: Reservation.visible_to(self)).destroy_all
   end
@@ -166,6 +174,10 @@ class User < ApplicationRecord
       group.memberships.build(user: self, admin: true)
       group.save
     end
+  end
+
+  def start_shopping_list(attributes)
+    ShoppingList.create(name: attributes[:name], people: [ self, *possible_shoppers.where(id: attributes[:person_ids]) ])
   end
 
   private

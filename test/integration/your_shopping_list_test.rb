@@ -1,6 +1,6 @@
 require "test_helper"
 
-class ShoppingListTest < ActionDispatch::IntegrationTest
+class YourShoppingListTest < ActionDispatch::IntegrationTest
   test "your shopping list shows what you've said you'll get, and only yours" do
     sign_in_as users(:bob)
 

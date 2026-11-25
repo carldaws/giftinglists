@@ -51,6 +51,12 @@ Rails.application.routes.draw do
     end
   end
 
+  resources :shopping_lists, only: %i[ index new create edit update ] do
+    scope module: :shopping_lists do
+      resources :shoppers, only: %i[ create destroy ]
+    end
+  end
+
   resources :joins, path: "join", only: %i[ new create show ], param: :join_code
 
   constraints(->(request) { Session.exists?(id: request.cookie_jar.signed[:session_id]) }) do
