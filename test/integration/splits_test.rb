@@ -10,7 +10,7 @@ class SplitsTest < ActionDispatch::IntegrationTest
 
     get person_path(users(:dan))
 
-    assert_select "##{dom_id(@kite)} summary", text: I18n.t("items.item.split")
+    assert_select "##{dom_id(@kite)} summary span", text: I18n.t("items.item.split")
     assert_select "##{dom_id(@kite)} select[name='reservation[split_with]'] option", count: 2
   end
 

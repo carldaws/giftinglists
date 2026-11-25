@@ -106,6 +106,10 @@ class User < ApplicationRecord
     dependants.where.not(id: group.memberships.select(:user_id))
   end
 
+  def shopping_lists_for_gifts_to(person)
+    shopping_lists.for_gifts_to(person).own_first.by_name.includes(:people)
+  end
+
   def possible_shoppers
     User.visible_to(self).where.not(email_address: nil).where.not(id:)
   end
@@ -132,7 +136,8 @@ class User < ApplicationRecord
   def splits_waiting
     splits = Reservation.visible_to(self).splits.unbought
     splits.on(shopping_lists).or(splits.where.not(item: Item.where(owner: dependants)))
-      .includes(:user, :shares, :sharers, item: [ :owner, { reservations: %i[ user sharers ] } ]).order(:created_at).select(&:waiting?)
+      .includes(:user, :shares, :sharers, occasion: :person, item: [ :owner, { reservations: [ :user, :sharers, { shopping_list: :people, shares: { shopping_list: :people } } ] } ])
+      .order(:created_at).select(&:waiting?)
   end
 
   def drop_gifts_no_longer_visible

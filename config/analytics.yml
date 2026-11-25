@@ -19,9 +19,9 @@ events:
   interest-added: Someone added something they love.
   size-added: Someone added a size.
   item-added: Something was added to a list, whether someone else suggested it, and whether it came from a link.
-  item-reserved: Someone picked something to give, whether they're splitting it, and what kind of occasion it's for.
+  item-reserved: Someone picked something to give, whether they're splitting it, what kind of occasion it's for, and whether it's on a shared shopping list.
   reservation-cancelled: Someone changed their mind about something they'd picked.
-  split-joined: Someone joined a split.
+  split-joined: Someone joined a split, and whether it's on a shared shopping list.
   split-left: Someone left a split.
   item-bought: Someone bought something they'd picked, what kind of occasion it's for, and how many occasions they've bought for.
   purchase-undone: Someone marked something as not bought after all.

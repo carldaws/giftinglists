@@ -75,7 +75,7 @@
         <% end %>
       <% end %>
 
-      <div class="flex flex-wrap gap-2">
+      <div class="group/actions flex flex-wrap gap-2">
         <% if card.reservations_shown? %>
           <% if card.joined_split.present? %>
             <% unless card.joined_split.bought? %>
@@ -83,14 +83,24 @@
             <% end %>
           <% elsif card.my_reservation.nil? %>
             <% card.joinable_splits.each do |split| %>
-              <%= button_to t(".join_split", name: split.user.name), item_split_share_path(card.item, split), class: "button button--small" %>
+              <%= form_with url: item_split_share_path(card.item, split), scope: :share, namespace: dom_id(split, :join), class: "flex flex-wrap items-center gap-2" do |form| %>
+                <%= render "items/shopping_list_field", form:, shopping_lists: card.shopping_lists_to_join_on %>
+                <%= form.button t(".join_split", name: split.user.name), class: "button button--small" %>
+              <% end %>
             <% end %>
             <% if card.reservable? %>
-              <%= button_to t(".reserve"), item_reservation_path(card.item), class: "button button--small" %>
+              <%= form_with url: item_reservation_path(card.item), scope: :reservation, namespace: dom_id(card.item, :reserve), class: "flex flex-wrap items-center gap-2 group-has-[details[open]]/actions:hidden" do |form| %>
+                <%= render "items/shopping_list_field", form:, shopping_lists: card.shopping_lists_to_reserve_on %>
+                <%= form.button t(".reserve"), class: "button button--small" %>
+              <% end %>
               <% if card.splittable? %>
                 <details class="group/split">
-                  <summary class="button button--secondary button--small list-none group-open/split:hidden [&::-webkit-details-marker]:hidden"><%= t(".split") %></summary>
-                  <%= form_with url: item_reservation_path(card.item), scope: :reservation, class: "flex flex-wrap items-center gap-2" do |form| %>
+                  <summary class="button button--secondary button--small list-none [&::-webkit-details-marker]:hidden">
+                    <span class="group-open/split:hidden"><%= t(".split") %></span>
+                    <span class="hidden group-open/split:inline"><%= t(".cancel_split") %></span>
+                  </summary>
+                  <%= form_with url: item_reservation_path(card.item), scope: :reservation, namespace: dom_id(card.item, :split), class: "mt-3 flex flex-wrap items-center gap-2" do |form| %>
+                    <%= render "items/shopping_list_field", form:, shopping_lists: card.shopping_lists_to_split_on %>
                     <%= form.label :split_with, t(".split_with"), class: "text-base font-semibold" %>
                     <%= form.select :split_with, split_options_for(card), {}, class: "input select h-9 w-auto text-base" %>
                     <%= form.submit t(".start_split"), class: "button button--small" %>

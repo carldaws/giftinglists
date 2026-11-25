@@ -136,6 +136,52 @@ class ShoppingListsTest < ActionDispatch::IntegrationTest
     assert_equal [ users(:alice) ], list.reload.people
   end
 
+  test "with more than one list to choose from, you pick which one a gift goes on" do
+    us = users(:alice).start_shopping_list(name: "Us", person_ids: [ users(:bob).id ])
+    sign_in_as users(:alice)
+
+    get person_path(users(:carol))
+    assert_select "##{dom_id(items(:books))} select[name='reservation[shopping_list_id]']", count: 2 do
+      assert_select "option", text: I18n.t("shopping_lists.own")
+      assert_select "option", text: us.name
+    end
+
+    post item_reservation_path(items(:books)), params: { reservation: { shopping_list_id: us.id } }
+
+    assert_equal us, items(:books).reservations.find_by!(user: users(:alice)).shopping_list
+  end
+
+  test "with only your own list there's nothing to pick" do
+    sign_in_as users(:alice)
+
+    get person_path(users(:carol))
+
+    assert_select "##{dom_id(items(:books))} select[name='reservation[shopping_list_id]']", count: 0
+  end
+
+  test "a gift can't go on a list you aren't on" do
+    us = users(:alice).start_shopping_list(name: "Us", person_ids: [ users(:bob).id ])
+    sign_in_as users(:carol)
+
+    post item_reservation_path(items(:scarf)), params: { reservation: { shopping_list_id: us.id } }
+
+    assert_response :not_found
+  end
+
+  test "joining a split onto a list you share" do
+    us = users(:carol).start_shopping_list(name: "Us", person_ids: [ users(:bob).id ])
+    kite = users(:dan).items.create!(name: "Kite")
+    split = kite.reserve_for(users(:alice), split_with: 2)
+    sign_in_as users(:carol)
+
+    get root_path
+    assert_select "#splits select[name='share[shopping_list_id]'] option", count: 2
+
+    post item_split_share_path(kite, split), params: { share: { shopping_list_id: us.id } }
+
+    assert_equal us, split.shares.find_by!(user: users(:carol)).shopping_list
+  end
+
   test "renaming a list" do
     list = users(:alice).start_shopping_list(name: "Us")
     sign_in_as users(:alice)

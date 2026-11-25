@@ -1,10 +1,12 @@
 class Share < ApplicationRecord
   belongs_to :reservation
   belongs_to :user
-  belongs_to :shopping_list, default: -> { user.own_shopping_list if user.present? }
+
+  include Shoppable
 
   validate :reservation_is_a_split, :user_can_split_it, if: -> { reservation.present? && user.present? }
   validate :split_has_room, :split_is_not_bought, :item_is_still_wanted, :user_is_not_already_getting_it, on: :create, if: -> { reservation.present? && errors.none? }
+  validate :shopping_list_can_take_it, on: :create, if: -> { reservation.present? && user.present? && shopping_list.present? && errors.none? }
 
   def leave
     reservation.with_lock do
@@ -39,5 +41,9 @@ class Share < ApplicationRecord
 
     def user_is_not_already_getting_it
       errors.add(:base, :already_getting_it) if reservation.item.reservations.involving(user).exists?
+    end
+
+    def shopping_list_can_take_it
+      shopping_list_can_take reservation.item, clashing_with: reservation.people_it_clashes_with
     end
 end

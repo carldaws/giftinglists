@@ -19,9 +19,9 @@
               </div>
               <% if reservation.joined_by?(Current.user) %>
                 <%= button_to t(".leave_split"), item_split_share_path(reservation.item, reservation), method: :delete, class: "button button--secondary button--small" %>
-              <% elsif !reservation.item.still_wanted? %>
+              <% elsif reservation.started_by?(Current.user) && !reservation.item.still_wanted? %>
                 <%= button_to t(".let_go"), item_reservation_path(reservation.item), method: :delete, class: "button button--secondary button--small" %>
-              <% else %>
+              <% elsif reservation.started_by?(Current.user) %>
                 <%= button_to item_purchase_path(reservation.item), class: "button button--secondary button--small" do %>
                   <svg viewBox="0 0 20 20" class="size-4" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 10.5l4 4 8-9"/></svg>
                   <%= t(".bought") %>

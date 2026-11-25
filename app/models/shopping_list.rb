@@ -12,26 +12,33 @@ class ShoppingList < ApplicationRecord
   validate :everyone_can_see_each_other, on: :create
 
   scope :shared, -> { where(user: nil) }
+  scope :own_first, -> { order(Arel.sql("shopping_lists.user_id IS NULL")) }
   scope :by_name, -> { order(:name) }
+  scope :for_gifts_to, ->(person) do
+    where.not(id: Shopper.where(user: person).select(:shopping_list_id))
+      .where.not(id: Shopper.where.not(user: User.who_can_see(person)).select(:shopping_list_id))
+  end
 
   def own?
-    user.present?
+    user_id.present?
   end
 
   def shopper?(person)
     people.include?(person)
   end
 
-  def recipients
-    Reservation.on(self).includes(:occasion, item: :owner).reject(&:given?).map { it.item.owner }.uniq
+  def with_any_of?(others)
+    people.intersect?(others)
   end
 
   def people_who_can_join
-    for_recipients = recipients.reduce(User.where.not(email_address: nil)) do |candidates, recipient|
-      candidates.where.not(id: recipient).where(id: User.who_can_see(recipient).select(:id))
+    gifts = gifts_to_give
+    candidates = User.where.not(email_address: nil).where.not(id: gifts.flat_map(&:people_it_clashes_with))
+    candidates = gifts.map { it.item.owner }.uniq.reduce(candidates) do |others, recipient|
+      others.where.not(id: recipient).where(id: User.who_can_see(recipient).select(:id))
     end
 
-    people.reduce(for_recipients) { |candidates, shopper| candidates.where(id: User.visible_to(shopper).select(:id)) }
+    people.reduce(candidates) { |others, shopper| others.where(id: User.visible_to(shopper).select(:id)) }
   end
 
   def people_addable_by(person)
@@ -49,6 +56,10 @@ class ShoppingList < ApplicationRecord
   end
 
   private
+    def gifts_to_give
+      Reservation.on(self).includes(:occasion, item: [ :owner, { reservations: [ { shopping_list: :people }, { shares: { shopping_list: :people } } ] } ]).reject(&:given?)
+    end
+
     def everyone_can_see_each_other
       unless people.all? { |person| User.visible_to(person).where(id: people.map(&:id)).count == people.size }
         errors.add(:base, :strangers)

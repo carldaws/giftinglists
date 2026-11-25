@@ -43,6 +43,16 @@ class ShoppingListTest < ActiveSupport::TestCase
     assert_equal [ users(:carol) ], list.people_who_can_join.where(id: [ users(:alice), users(:bob), users(:carol) ]).to_a
   end
 
+  test "nobody can join a list that would put them in the same split twice" do
+    kite = users(:dan).items.create!(name: "Kite")
+    split = kite.reserve_for(users(:alice), split_with: 2)
+    split.join(users(:bob))
+    solo = users(:carol).start_shopping_list(name: "Solo")
+    split.join(users(:carol), shopping_list: solo)
+
+    assert_not solo.shoppers.build(user: users(:bob)).valid?
+  end
+
   test "gifts that have been given don't stop anyone joining" do
     list = users(:carol).start_shopping_list(name: "Camping")
     trip = groups(:ivies).occasions.create!(name: "Camping trip", date: 1.week.from_now.to_date)
@@ -58,6 +68,16 @@ class ShoppingListTest < ActiveSupport::TestCase
 
     assert_not list.shoppers.build(user: users(:erin)).valid?
     assert_equal [ users(:bob) ], list.people_addable_by(users(:carol)).to_a
+  end
+
+  test "gifts for someone can go on lists they aren't on, where everyone can see them" do
+    us = users(:alice).start_shopping_list(name: "Us", person_ids: [ users(:bob).id ])
+    camping = users(:carol).start_shopping_list(name: "Camping", person_ids: [ users(:erin).id ])
+
+    assert_includes ShoppingList.for_gifts_to(users(:carol)), us
+    assert_not_includes ShoppingList.for_gifts_to(users(:alice)), us
+    assert_not_includes ShoppingList.for_gifts_to(users(:alice)), camping
+    assert_includes ShoppingList.for_gifts_to(users(:dan)), shopping_lists(:carols)
   end
 
   test "you can add people from your groups who could join and aren't on it already" do

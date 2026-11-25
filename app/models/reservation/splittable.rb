@@ -23,6 +23,10 @@ module Reservation::Splittable
     [ user, *sharers ]
   end
 
+  def shopping_lists
+    [ shopping_list, *shares.map(&:shopping_list) ]
+  end
+
   def started_by?(person)
     user == person
   end
@@ -44,11 +48,16 @@ module Reservation::Splittable
   end
 
   def joinable_by?(person)
-    waiting? && item.still_wanted? && item.reservations.none? { it.people.include?(person) }
+    waiting? && item.still_wanted? && item.people_getting_it.exclude?(person)
   end
 
-  def join(person)
-    item.with_lock { shares.find_or_create_by(user: person) }
+  def shopping_lists_to_join_for(person)
+    getting = item.people_getting_it
+    person.shopping_lists_for_gifts_to(item.owner).reject { it.with_any_of?(getting) }
+  end
+
+  def join(person, shopping_list: nil)
+    item.with_lock { shares.create_with(shopping_list:).find_or_create_by(user: person) }
   end
 
   def hand_over
@@ -72,7 +81,7 @@ module Reservation::Splittable
     end
 
     def split_fits_the_people_who_can_join
-      available = item.people_to_split_with(user).count
+      available = item.people_to_split_with(user).where.not(id: shopping_list.shoppers.select(:user_id)).count
       errors.add(:split_with, :too_many, count: available) if split_with > available
     end
 

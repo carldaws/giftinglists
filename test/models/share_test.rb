@@ -63,6 +63,35 @@ class ShareTest < ActiveSupport::TestCase
     assert_equal shopping_lists(:bobs), @split.join(users(:bob)).shopping_list
   end
 
+  test "you can join a split on a list you share" do
+    us = users(:bob).start_shopping_list(name: "Us", person_ids: [ users(:carol).id ])
+
+    assert_equal us, @split.join(users(:bob), shopping_list: us).shopping_list
+  end
+
+  test "you can't join a split on a list you aren't on" do
+    us = users(:bob).start_shopping_list(name: "Us", person_ids: [ users(:carol).id ])
+    groups(:hollies).add(users(:erin))
+
+    assert @split.join(users(:erin), shopping_list: us).errors.of_kind?(:base, :wrong_shopping_list)
+  end
+
+  test "nobody gets into a split twice through a list they share" do
+    us = users(:bob).start_shopping_list(name: "Us", person_ids: [ users(:carol).id ])
+    @split.join(users(:bob))
+
+    assert @split.join(users(:carol), shopping_list: us).errors.of_kind?(:base, :shopping_list_already_getting_it)
+    assert @split.join(users(:carol)).persisted?
+  end
+
+  test "a split on a list you share can't count on the others on it" do
+    @split.destroy!
+    us = users(:alice).start_shopping_list(name: "Us", person_ids: [ users(:bob).id ])
+
+    assert_not @kite.reservations.build(user: users(:alice), shopping_list: us, split_with: 2).valid?
+    assert_equal [ users(:carol) ], @kite.reserve_for(users(:alice), shopping_list: us, split_with: 1).item.people_to_split_with(users(:alice)).to_a
+  end
+
   test "the person who started a split can't join it" do
     share = @split.join(users(:alice))
 
@@ -232,6 +261,16 @@ class ShareTest < ActiveSupport::TestCase
     assert @split.bought?
     assert_includes users(:bob).shopping, @split
     assert_includes users(:carol).shopping, @split
+  end
+
+  test "a split handed over to someone who joined on a list they share stays on that list" do
+    with_carol = users(:bob).start_shopping_list(name: "Bob and Carol", person_ids: [ users(:carol).id ])
+    @split.join(users(:bob), shopping_list: with_carol)
+
+    users(:alice).delete_account
+
+    assert_equal users(:bob), @split.reload.user
+    assert_equal with_carol, @split.shopping_list
   end
 
   test "deleting your account hands your splits to the first person who joined" do

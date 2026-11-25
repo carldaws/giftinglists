@@ -444,6 +444,8 @@ en:
 
   items:
     something_from: Something from %{shop}
+    shopping_list_field:
+      label: Shopping list
     form:
       name: What is it?
       url: Link
@@ -491,6 +493,7 @@ en:
       save_occasion: Save
       reserve: I'll get this
       split: I'll split this
+      cancel_split: Cancel
       split_with: I'll split this with
       split_others:
         one: 1 other person
@@ -549,6 +552,7 @@ en:
         received: "%{name} ticked off. It's in your received list if you change your mind."
 
   shopping_lists:
+    own: Just me
     index:
       heading: Shopping lists
       intro: Share a shopping list with the people you buy gifts with, like a partner. Everyone on it sees what's on it and can tick things off.
@@ -816,8 +820,10 @@ en:
         too_large: must be smaller than %{size}
         name_or_link: Add a name or a link, so everyone knows what it is.
         someone_elses_own_list: Only you can be on your own shopping list.
-        cannot_join: "%{name} can't join this list. It has gifts for them, or for people outside their groups, or people on it they aren't in a group with."
+        cannot_join: "%{name} can't join this list."
         strangers: Everyone on a shopping list needs to be in a group with everyone else on it.
+        wrong_shopping_list: You can't use that shopping list for gifts to %{name}.
+        shopping_list_already_getting_it: Someone on that shopping list is already getting this.
       models:
         user:
           attributes:

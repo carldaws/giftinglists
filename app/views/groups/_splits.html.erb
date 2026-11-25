@@ -18,7 +18,10 @@
           <% elsif split.joined_by?(Current.user) %>
             <%= button_to t(".leave"), item_split_share_path(split.item, split), method: :delete, class: "button button--secondary button--small" %>
           <% elsif split.joinable_by?(Current.user) %>
-            <%= button_to t(".join"), item_split_share_path(split.item, split), class: "button button--small" %>
+            <%= form_with url: item_split_share_path(split.item, split), scope: :share, namespace: dom_id(split, :join), class: "flex flex-wrap items-center justify-end gap-2" do |form| %>
+              <%= render "items/shopping_list_field", form:, shopping_lists: split.shopping_lists_to_join_for(Current.user) %>
+              <%= form.button t(".join"), class: "button button--small" %>
+            <% end %>
           <% end %>
         </li>
       <% end %>
