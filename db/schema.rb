@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_27_135227) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_25_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -176,8 +176,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_27_135227) do
     t.datetime "updated_at", null: false
     t.bigint "occasion_id"
     t.integer "split_with"
+    t.bigint "shopping_list_id", null: false
     t.index ["item_id", "user_id"], name: "index_reservations_on_item_id_and_user_id", unique: true
     t.index ["occasion_id"], name: "index_reservations_on_occasion_id"
+    t.index ["shopping_list_id"], name: "index_reservations_on_shopping_list_id"
     t.index ["user_id"], name: "index_reservations_on_user_id"
   end
 
@@ -195,8 +197,28 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_27_135227) do
     t.bigint "user_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "shopping_list_id", null: false
     t.index ["reservation_id", "user_id"], name: "index_shares_on_reservation_id_and_user_id", unique: true
+    t.index ["shopping_list_id"], name: "index_shares_on_shopping_list_id"
     t.index ["user_id"], name: "index_shares_on_user_id"
+  end
+
+  create_table "shoppers", force: :cascade do |t|
+    t.bigint "shopping_list_id", null: false
+    t.bigint "user_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["shopping_list_id", "user_id"], name: "index_shoppers_on_shopping_list_id_and_user_id", unique: true
+    t.index ["user_id"], name: "index_shoppers_on_user_id"
+  end
+
+  create_table "shopping_lists", force: :cascade do |t|
+    t.bigint "user_id"
+    t.string "name"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id"], name: "index_shopping_lists_on_user_id", unique: true
+    t.check_constraint "num_nonnulls(user_id, name) = 1", name: "shopping_lists_are_someones_own_or_named"
   end
 
   create_table "sizes", force: :cascade do |t|
@@ -247,9 +269,14 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_27_135227) do
   add_foreign_key "readings", "users"
   add_foreign_key "reservations", "items"
   add_foreign_key "reservations", "occasions", on_delete: :nullify
+  add_foreign_key "reservations", "shopping_lists"
   add_foreign_key "reservations", "users"
   add_foreign_key "sessions", "users"
   add_foreign_key "shares", "reservations"
+  add_foreign_key "shares", "shopping_lists"
   add_foreign_key "shares", "users"
+  add_foreign_key "shoppers", "shopping_lists"
+  add_foreign_key "shoppers", "users"
+  add_foreign_key "shopping_lists", "users"
   add_foreign_key "sizes", "users"
 end

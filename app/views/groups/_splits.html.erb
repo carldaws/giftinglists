@@ -1,4 +1,4 @@
-<%# locals: (splits:) %>
+<%# locals: (splits:, shopping:) %>
 <% if splits.any? %>
   <section id="splits" aria-labelledby="splits-heading" class="section">
     <%= section_header t(".heading"), id: "splits-heading" %>
@@ -13,12 +13,15 @@
             <p class="row-meta"><%= status_for(split) %></p>
             <%= split_note_tag(split) %>
           </div>
-          <% if split.started_by?(Current.user) %>
-            <%= button_to t(".call_off"), item_reservation_path(split.item), method: :delete, class: "button button--secondary button--small" %>
-          <% elsif split.joined_by?(Current.user) %>
+          <% if shopping.ours?(split) %>
+            <%= button_to t(".call_off"), reservation_path(split), method: :delete, class: "button button--secondary button--small" %>
+          <% elsif shopping.joined?(split) %>
             <%= button_to t(".leave"), item_split_share_path(split.item, split), method: :delete, class: "button button--secondary button--small" %>
           <% elsif split.joinable_by?(Current.user) %>
-            <%= button_to t(".join"), item_split_share_path(split.item, split), class: "button button--small" %>
+            <%= form_with url: item_split_share_path(split.item, split), scope: :share, namespace: dom_id(split, :join), class: "flex flex-wrap items-center justify-end gap-2" do |form| %>
+              <%= render "items/shopping_list_field", form:, shopping_lists: split.shopping_lists_to_join_for(Current.user) %>
+              <%= form.button t(".join"), class: "button button--small" %>
+            <% end %>
           <% end %>
         </li>
       <% end %>

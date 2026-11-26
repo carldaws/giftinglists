@@ -1,0 +1,45 @@
+<div class="page page--single">
+  <%= page_header t(".heading"), crumbs: [ [ t("layouts.header.home"), root_path ] ], subtitle: t(".intro") do %>
+    <%= link_to t(".new"), new_shopping_list_path, class: "button" %>
+  <% end %>
+
+  <% if @overviews.none? %>
+    <div class="card">
+      <p class="empty"><%= t(".empty") %></p>
+    </div>
+  <% end %>
+
+  <% @overviews.each do |overview| %>
+    <section id="<%= dom_id(overview.shopping_list) %>" aria-labelledby="<%= dom_id(overview.shopping_list, :heading) %>" class="section">
+      <%= section_header overview.shopping_list.name, id: dom_id(overview.shopping_list, :heading) do %>
+        <%= link_to t(".rename"), edit_shopping_list_path(overview.shopping_list), class: "button button--secondary button--small" %>
+      <% end %>
+
+      <ul class="card card--flush list">
+        <% overview.shoppers.each do |shopper| %>
+          <li class="row">
+            <%= avatar_tag shopper.user, size: :sm, tooltip: false %>
+            <p class="row-title min-w-0 flex-1">
+              <%= shopper.user.name %>
+              <% if overview.you?(shopper) %><span class="font-normal text-muted"><%= t(".you") %></span><% end %>
+            </p>
+            <%= button_to (overview.you?(shopper) ? t(".leave") : t(".remove")), shopping_list_shopper_path(overview.shopping_list, shopper), method: :delete,
+                  class: "button button--secondary button--small",
+                  form: { data: { turbo_confirm: (overview.you?(shopper) ? t(".leave_confirm", list: overview.shopping_list.name) : t(".remove_confirm", name: shopper.user.name, list: overview.shopping_list.name)) } } %>
+          </li>
+        <% end %>
+
+        <% if overview.people_to_add.any? %>
+          <li class="row">
+            <%= form_with model: Shopper.new, url: shopping_list_shoppers_path(overview.shopping_list), class: "flex w-full flex-wrap gap-2" do |form| %>
+              <%= form.label :user_id, t(".add_label", list: overview.shopping_list.name), class: "sr-only" %>
+              <%= form.collection_select :user_id, overview.people_to_add, :id, :name, { prompt: t(".add_prompt") },
+                    required: true, class: "input select min-w-0 flex-1" %>
+              <%= form.submit t(".add"), class: "button button--secondary" %>
+            <% end %>
+          </li>
+        <% end %>
+      </ul>
+    </section>
+  <% end %>
+</div>

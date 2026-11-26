@@ -1,0 +1,7 @@
+<div class="page page--single">
+  <%= page_header t(".heading"), crumbs: [ [ t("layouts.header.home"), root_path ], [ t("shopping_lists.index.heading"), shopping_lists_path ] ], subtitle: t(".intro") %>
+
+  <div class="card">
+    <%= render "form", shopping_list: @shopping_list, submit: t(".submit") %>
+  </div>
+</div>

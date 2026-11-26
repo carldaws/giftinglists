@@ -124,6 +124,29 @@ class UserTest < ActiveSupport::TestCase
     assert_empty users(:dan).guardians
   end
 
+  test "people who sign in have their own shopping list, with only them on it" do
+    fern = User.create!(name: "Fern", email_address: "fern@example.com", password: "a long enough password")
+
+    assert_equal [ fern ], fern.own_shopping_list.people
+    assert_equal [ fern.own_shopping_list ], fern.shopping_lists
+  end
+
+  test "a dependant gets their own shopping list once they set up their account" do
+    assert_nil users(:dan).own_shopping_list
+
+    save_credentials(users(:dan), email_address: "dan@example.com", password: "a brand new password")
+
+    assert_equal [ users(:dan) ], users(:dan).reload.own_shopping_list.people
+  end
+
+  test "changing your email address keeps the same shopping list" do
+    list = users(:alice).own_shopping_list
+
+    users(:alice).update!(email_address: "alice@example.org", password_challenge: FixturePasswords::PASSWORD)
+
+    assert_equal list, users(:alice).reload.own_shopping_list
+  end
+
   test "a dependant setting up their own account needs an email address" do
     assert_not save_credentials(users(:dan), email_address: "", password: "a brand new password")
     assert_not_empty users(:dan).reload.guardians
@@ -174,21 +197,35 @@ class UserTest < ActiveSupport::TestCase
 
   test "your shopping list splits what's still to buy from what's bought" do
     items(:socks).reserve_for(users(:carol))
-    shopping_list = users(:carol).shopping_list
+    shopping = users(:carol).shopping
 
-    assert_equal [ items(:socks) ], shopping_list.to_buy.map(&:item)
-    assert_equal [ reservations(:carol_bought_lego) ], shopping_list.bought
+    assert_equal [ items(:socks) ], shopping.to_buy.map(&:item)
+    assert_equal [ reservations(:carol_bought_lego) ], shopping.bought
+  end
+
+  test "your shopping list knows which picks are yours to tick off and which you joined through a list" do
+    us = users(:carol).start_shopping_list(name: "Us", person_ids: [ users(:bob).id ])
+    kite = users(:dan).items.create!(name: "Kite")
+    split = kite.reserve_for(users(:alice), split_with: 1)
+    share = split.join(users(:bob), shopping_list: us)
+    socks = items(:socks).reserve_for(users(:bob), shopping_list: us)
+    shopping = users(:carol).shopping
+
+    assert shopping.joined?(split)
+    assert_equal share, shopping.pick_for(split)
+    assert_not shopping.joined?(socks)
+    assert_equal socks, shopping.pick_for(socks)
   end
 
   test "gifts already given are off your shopping list" do
     reservations(:carol_bought_lego).update_columns(occasion_id: occasions(:christmas).id)
     occasions(:christmas).update_columns(date: 1.day.ago)
 
-    assert_not users(:carol).shopping_list.any?
+    assert_not users(:carol).shopping.any?
   end
 
   test "there's nothing on your shopping list until you've picked something" do
-    assert_not users(:erin).shopping_list.any?
+    assert_not users(:erin).shopping.any?
   end
 
   test "counts the different occasions someone has bought gifts for" do

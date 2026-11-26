@@ -114,16 +114,22 @@ class Item < ApplicationRecord
     end
   end
 
-  def reserve_for(user, split_with: nil)
-    with_lock { reservations.create(user:, split_with:, occasion: Occasion.next_for_gifts_to(owner, from: user)) }
+  def reserve_for(user, split_with: nil, shopping_list: nil)
+    with_lock { reservations.create(user:, split_with:, shopping_list:, occasion: Occasion.next_for_gifts_to(owner, from: user)) }
   rescue ActiveRecord::RecordNotUnique
     reservations.find_by!(user:)
   end
 
+  def people_getting_it
+    reservations.flat_map(&:shopping_lists).flat_map(&:people).uniq
+  end
+
+  def people_splitting_it
+    reservations.select(&:split?).flat_map(&:shopping_lists).flat_map(&:people).uniq
+  end
+
   def people_to_split_with(organiser)
-    User.who_can_split_gifts_to(owner, with: organiser)
-      .where.not(id: reservations.select(:user_id))
-      .where.not(id: Share.where(reservation: reservations).select(:user_id))
+    User.who_can_split_gifts_to(owner, with: organiser).where.not(id: people_getting_it.map(&:id))
   end
 
   def receivable_by?(user)

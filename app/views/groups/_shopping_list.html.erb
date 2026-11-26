@@ -1,12 +1,12 @@
-<%# locals: (shopping_list:) %>
-<% if shopping_list.any? %>
+<%# locals: (shopping:) %>
+<% if shopping.any? %>
   <section id="shopping-list" aria-labelledby="shopping-list-heading" class="section">
     <%= section_header t(".heading"), id: "shopping-list-heading" %>
 
     <div class="card card--flush">
-      <% if shopping_list.to_buy.any? %>
+      <% if shopping.to_buy.any? %>
         <ul class="list">
-          <% shopping_list.to_buy.each do |reservation| %>
+          <% shopping.to_buy.each do |reservation| %>
             <li class="row">
               <%= avatar_tag reservation.item.owner %>
               <div class="min-w-0 flex-1">
@@ -15,14 +15,15 @@
                 <% if reservation.split? %>
                   <p class="row-meta"><%= splitting_with(reservation) %></p>
                 <% end %>
+                <%= shopping_list_pick_tag(shopping.pick_for(reservation)) %>
                 <%= shopping_list_note_tag(reservation) %>
               </div>
-              <% if reservation.joined_by?(Current.user) %>
+              <% if shopping.joined?(reservation) %>
                 <%= button_to t(".leave_split"), item_split_share_path(reservation.item, reservation), method: :delete, class: "button button--secondary button--small" %>
               <% elsif !reservation.item.still_wanted? %>
-                <%= button_to t(".let_go"), item_reservation_path(reservation.item), method: :delete, class: "button button--secondary button--small" %>
+                <%= button_to t(".let_go"), reservation_path(reservation), method: :delete, class: "button button--secondary button--small" %>
               <% else %>
-                <%= button_to item_purchase_path(reservation.item), class: "button button--secondary button--small" do %>
+                <%= button_to reservation_purchase_path(reservation), class: "button button--secondary button--small" do %>
                   <svg viewBox="0 0 20 20" class="size-4" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 10.5l4 4 8-9"/></svg>
                   <%= t(".bought") %>
                 <% end %>
@@ -34,13 +35,13 @@
         <p class="row empty"><%= t(".all_bought") %></p>
       <% end %>
 
-      <% if shopping_list.bought.any? %>
+      <% if shopping.bought.any? %>
         <details class="border-t border-line">
           <summary class="row row--link cursor-pointer list-none font-semibold [&::-webkit-details-marker]:hidden">
-            <%= t(".bought_count", count: shopping_list.bought.size) %>
+            <%= t(".bought_count", count: shopping.bought.size) %>
           </summary>
           <ul class="list border-t border-line">
-            <% shopping_list.bought.each do |reservation| %>
+            <% shopping.bought.each do |reservation| %>
               <li class="row">
                 <div class="min-w-0 flex-1">
                   <p class="text-muted line-through"><%= reservation.item.title %></p>
@@ -48,14 +49,17 @@
                   <% if reservation.split? %>
                     <p class="row-meta"><%= splitting_with(reservation) %></p>
                   <% end %>
+                  <%= shopping_list_pick_tag(shopping.pick_for(reservation)) %>
                   <% if reservation.item.removed? %>
                     <%= note_tag t(".removed") %>
                   <% end %>
                 </div>
-                <% if reservation.started_by?(Current.user) && reservation.item.removed? %>
-                  <%= button_to t(".let_go"), item_reservation_path(reservation.item), method: :delete, class: "button button--secondary button--small" %>
-                <% elsif reservation.started_by?(Current.user) %>
-                  <%= button_to t(".put_back"), item_purchase_path(reservation.item), method: :delete, class: "button button--secondary button--small" %>
+                <% unless shopping.joined?(reservation) %>
+                  <% if reservation.item.removed? %>
+                    <%= button_to t(".let_go"), reservation_path(reservation), method: :delete, class: "button button--secondary button--small" %>
+                  <% else %>
+                    <%= button_to t(".put_back"), reservation_purchase_path(reservation), method: :delete, class: "button button--secondary button--small" %>
+                  <% end %>
                 <% end %>
               </li>
             <% end %>

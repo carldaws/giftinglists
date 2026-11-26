@@ -98,6 +98,65 @@ class ReservationTest < ActiveSupport::TestCase
     end
   end
 
+  test "what you reserve goes on your own shopping list" do
+    assert_equal shopping_lists(:carols), items(:socks).reserve_for(users(:carol)).shopping_list
+  end
+
+  test "you can put what you reserve on a list you share" do
+    us = users(:alice).start_shopping_list(name: "Us", person_ids: [ users(:bob).id ])
+
+    assert_equal us, items(:books).reserve_for(users(:alice), shopping_list: us).shopping_list
+  end
+
+  test "you can't put what you reserve on a list you aren't on" do
+    us = users(:alice).start_shopping_list(name: "Us", person_ids: [ users(:bob).id ])
+
+    reservation = items(:books).reserve_for(users(:erin), shopping_list: us)
+
+    assert reservation.errors.of_kind?(:base, :wrong_shopping_list)
+  end
+
+  test "a gift can't go on a list the person it's for is on" do
+    us = users(:alice).start_shopping_list(name: "Us", person_ids: [ users(:bob).id ])
+
+    reservation = items(:socks).reserve_for(users(:bob), shopping_list: us)
+
+    assert reservation.errors.of_kind?(:base, :wrong_shopping_list)
+  end
+
+  test "a gift can't go on a list with someone who can't see the person it's for" do
+    camping = users(:carol).start_shopping_list(name: "Camping", person_ids: [ users(:erin).id ])
+
+    reservation = items(:socks).reserve_for(users(:carol), shopping_list: camping)
+
+    assert reservation.errors.of_kind?(:base, :wrong_shopping_list)
+  end
+
+  test "a gift can't go on a list with someone on it who's splitting the same thing" do
+    us = users(:alice).start_shopping_list(name: "Us", person_ids: [ users(:bob).id ])
+    kite = users(:dan).items.create!(name: "Kite", quantity: 2)
+    kite.reserve_for(users(:carol), split_with: 1).join(users(:bob))
+
+    assert kite.reserve_for(users(:alice), shopping_list: us).errors.of_kind?(:base, :shopping_list_already_getting_it)
+    assert kite.reserve_for(users(:alice)).persisted?
+  end
+
+  test "a gift can't go on a list with someone on it who started a split for the same thing" do
+    with_bob = users(:carol).start_shopping_list(name: "Carol and Bob", person_ids: [ users(:bob).id ])
+    kite = users(:dan).items.create!(name: "Kite", quantity: 2)
+    kite.reserve_for(users(:bob), split_with: 1)
+
+    assert kite.reserve_for(users(:carol), shopping_list: with_bob).errors.of_kind?(:base, :shopping_list_already_getting_it)
+  end
+
+  test "a split can't go on a list with someone on it who's already getting the same thing" do
+    with_bob = users(:carol).start_shopping_list(name: "Carol and Bob", person_ids: [ users(:bob).id ])
+    kite = users(:dan).items.create!(name: "Kite", quantity: 2)
+    kite.reserve_for(users(:bob))
+
+    assert kite.reserve_for(users(:carol), shopping_list: with_bob, split_with: 1).errors.of_kind?(:base, :shopping_list_already_getting_it)
+  end
+
   test "buying" do
     reservations(:bob_reserved_scarf).buy
     assert reservations(:bob_reserved_scarf).bought?

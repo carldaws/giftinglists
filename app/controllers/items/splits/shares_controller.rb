@@ -1,13 +1,13 @@
 class Items::Splits::SharesController < ApplicationController
-  include ItemScoped
+  include ItemScoped, ShoppingListChoice
 
   before_action :set_split
 
   def create
-    share = @split.join(Current.user)
+    share = @split.join(Current.user, shopping_list: chosen_shopping_list(:share))
 
     if share.persisted?
-      track_event "split-joined"
+      track_event "split-joined", shared_list: !share.shopping_list.own?
       redirect_back_or_to_list
     else
       redirect_back_or_to_list alert: share.errors.full_messages.to_sentence
@@ -15,7 +15,7 @@ class Items::Splits::SharesController < ApplicationController
   end
 
   def destroy
-    share = @split.shares.find_by!(user: Current.user)
+    share = @split.shares.find_by!(shopping_list: Current.user.shopping_lists)
     share.leave
 
     if share.destroyed?

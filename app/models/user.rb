@@ -9,6 +9,9 @@ class User < ApplicationRecord
   has_many :sizes, dependent: :destroy
   has_many :reservations, dependent: :destroy
   has_many :shares, dependent: :destroy
+  has_many :shoppers, dependent: :destroy
+  has_many :shopping_lists, through: :shoppers
+  has_one :own_shopping_list, class_name: "ShoppingList", dependent: :destroy, inverse_of: :user
   has_many :readings, dependent: :destroy
   has_many :suggestions, class_name: "Item", foreign_key: :suggested_by_id, inverse_of: :suggested_by, dependent: :destroy
   has_many :authored_messages, class_name: "Message", foreign_key: :author_id, inverse_of: :author
@@ -44,6 +47,7 @@ class User < ApplicationRecord
 
   after_update :stop_being_looked_after, if: -> { saved_change_to_email_address? && signs_in? }
   after_update :sign_out_everywhere, if: :saved_change_to_password_digest?
+  after_save :open_own_shopping_list, if: -> { saved_change_to_email_address?(from: nil) }
 
   scope :by_name, -> { order(Arel.sql("lower(users.name)")) }
   scope :visible_to, ->(user) do
@@ -51,11 +55,13 @@ class User < ApplicationRecord
       .or(where(id: user.id))
       .or(where(id: user.guardianships.select(:dependant_id)))
   end
+  scope :who_can_see, ->(person) do
+    where(id: Membership.where(group_id: person.memberships.select(:group_id)).select(:user_id))
+      .or(where(id: person.id))
+      .or(where(id: person.guardianships_as_dependant.select(:guardian_id)))
+  end
   scope :who_can_split_gifts_to, ->(owner, with:) do
-    where(id: Membership.where(group_id: owner.memberships.select(:group_id)).select(:user_id))
-      .or(where(id: owner.guardianships_as_dependant.select(:guardian_id)))
-      .where.not(email_address: nil)
-      .where.not(id: [ owner.id, with.id ])
+    who_can_see(owner).where.not(email_address: nil).where.not(id: [ owner.id, with.id ])
   end
 
   def visible_to?(user)
@@ -100,12 +106,24 @@ class User < ApplicationRecord
     dependants.where.not(id: group.memberships.select(:user_id))
   end
 
-  def shopping_list
-    ShoppingList.new(self)
+  def shopping_list_reservations
+    Reservation.visible_to(self).where(shopping_list: shopping_lists)
+  end
+
+  def shopping_lists_for_gifts_to(person)
+    shopping_lists.for_gifts_to(person).own_first.by_name.includes(:people)
+  end
+
+  def possible_shoppers
+    User.visible_to(self).where.not(email_address: nil).where.not(id:)
+  end
+
+  def shopping
+    Shopping.new(self)
   end
 
   def occasions_bought_for
-    reservations.where.not(bought_at: nil).distinct.count(:occasion_id)
+    Reservation.where(shopping_list: shopping_lists).where.not(bought_at: nil).distinct.count(:occasion_id)
   end
 
   def lists
@@ -121,11 +139,14 @@ class User < ApplicationRecord
 
   def splits_waiting
     splits = Reservation.visible_to(self).splits.unbought
-    splits.involving(self).or(splits.where.not(item: Item.where(owner: dependants)))
-      .includes(:user, :shares, :sharers, item: [ :owner, { reservations: %i[ user sharers ] } ]).order(:created_at).select(&:waiting?)
+    splits.on(shopping_lists).or(splits.where.not(item: Item.where(owner: dependants)))
+      .includes(:user, :shares, :sharers, occasion: :person, item: [ :owner, { reservations: [ :user, :sharers, { shopping_list: :people, shares: { shopping_list: :people } } ] } ])
+      .order(:created_at).select(&:waiting?)
   end
 
   def drop_gifts_no_longer_visible
+    shoppers.on_shared_lists.includes(:shopping_list).reject(&:can_see_everyone?).each(&:leave)
+    shopping_lists.shared.each { it.hand_back_gifts_hidden_from(self) }
     reservations.where.not(item: Item.visible_to(self)).find_each(&:give_up)
     shares.where.not(reservation: Reservation.visible_to(self)).destroy_all
   end
@@ -147,7 +168,7 @@ class User < ApplicationRecord
   end
 
   def people_chosen_for(occasion)
-    picks = Reservation.involving(self).where(occasion:).joins(:item)
+    picks = Reservation.on(shopping_lists).where(occasion:).joins(:item)
     User.where(id: picks.merge(Item.listed).or(picks.where.not(bought_at: nil)).select("items.owner_id"))
   end
 
@@ -164,6 +185,10 @@ class User < ApplicationRecord
     end
   end
 
+  def start_shopping_list(attributes)
+    ShoppingList.create(name: attributes[:name], people: [ self, *possible_shoppers.where(id: attributes[:person_ids]) ])
+  end
+
   private
     def gift_recipients_for(occasion, in_group:, visible_ids:)
       people = in_group.present? ? occasion.people_in(in_group) : occasion.people_for(self)
@@ -176,6 +201,10 @@ class User < ApplicationRecord
 
     def sign_out_everywhere
       sessions.destroy_all
+    end
+
+    def open_own_shopping_list
+      create_own_shopping_list!(people: [ self ])
     end
 
     def email_change_is_confirmed_with_password

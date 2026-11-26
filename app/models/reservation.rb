@@ -10,7 +10,9 @@ class Reservation < ApplicationRecord
   validate :occasion_is_for_gifts_to_the_owner, if: -> { will_save_change_to_occasion_id? && occasion_id.present? && errors.none? }
   validate :given_gifts_keep_their_occasion, on: :update, if: :will_save_change_to_occasion_id?
 
-  include Splittable
+  include Splittable, Shoppable
+
+  validate :shopping_list_can_take_it, on: :create, if: -> { item.present? && user.present? && shopping_list.present? && errors.none? }
 
   after_create :clear_release_note, if: -> { item.released_by_name.present? }
   after_destroy :forget_removed_item, unless: :destroyed_with_item?
@@ -34,6 +36,10 @@ class Reservation < ApplicationRecord
 
   def unbuy
     update!(bought_at: nil)
+  end
+
+  def people_it_clashes_with
+    split? ? item.people_getting_it : item.people_splitting_it
   end
 
   private
@@ -71,6 +77,10 @@ class Reservation < ApplicationRecord
 
     def occasion_is_for_gifts_to_the_owner
       errors.add(:occasion, :not_for_this_person) unless Occasion.for_gifts_to(item.owner, from: user).exists?(occasion_id)
+    end
+
+    def shopping_list_can_take_it
+      shopping_list_can_take item, clashing_with: people_it_clashes_with
     end
 
     def given_gifts_keep_their_occasion

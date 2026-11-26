@@ -1,0 +1,35 @@
+<%# locals: (shopping_list:, submit:) %>
+<%= form_with model: shopping_list do |form| %>
+  <%= render "shared/errors", record: shopping_list %>
+
+  <div class="fields">
+    <div class="field">
+      <%= form.label :name, t("shopping_lists.form.name"), class: "label" %>
+      <%= form.text_field :name, required: true, autofocus: true, class: "input", aria: { describedby: "shopping-list-name-hint" } %>
+      <p id="shopping-list-name-hint" class="hint"><%= t("shopping_lists.form.name_hint") %></p>
+    </div>
+
+    <% if shopping_list.new_record? && Current.user.possible_shoppers.any? %>
+      <fieldset class="field">
+        <legend class="label mb-2"><%= t("shopping_lists.form.people") %></legend>
+        <p class="hint"><%= t("shopping_lists.form.people_hint") %></p>
+
+        <%= hidden_field_tag "shopping_list[person_ids][]", "" %>
+        <div class="flex flex-wrap gap-2">
+          <% Current.user.possible_shoppers.by_name.each do |person| %>
+            <label class="chip chip--toggle">
+              <%= check_box_tag "shopping_list[person_ids][]", person.id, shopping_list.shopper?(person),
+                    id: "shopping_list_person_#{person.id}", class: "sr-only" %>
+              <%= avatar_tag person, size: :sm, tooltip: false, ring: false %>
+              <%= person.name %>
+            </label>
+          <% end %>
+        </div>
+      </fieldset>
+    <% end %>
+  </div>
+
+  <div class="form-actions">
+    <%= form.submit submit, class: "button button--wide" %>
+  </div>
+<% end %>

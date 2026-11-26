@@ -1,0 +1,5 @@
+<%# locals: (form:, shopping_lists:) %>
+<% if shopping_lists.many? %>
+  <%= form.label :shopping_list_id, t("items.shopping_list_field.label"), class: "sr-only" %>
+  <%= form.select :shopping_list_id, shopping_list_options(shopping_lists), {}, class: "input select h-9 w-auto text-base" %>
+<% end %>

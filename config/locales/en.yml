@@ -18,6 +18,7 @@ en:
       label: Your account
       your_page: Your page
       your_details: Your details
+      shopping_lists: Shopping lists
       sign_out: Sign out
     signed_out_nav:
       sign_in: Sign in
@@ -115,6 +116,7 @@ en:
       for_occasion: For %{name} · %{occasion}, %{countdown}
       their_occasion: "%{occasion}, %{countdown}"
       already_has: "%{name} has ticked this off, so they may already have it."
+      picked: "%{list} · %{name} picked this"
       removed: No longer on the list.
       bought: Bought
       let_go: Let it go
@@ -443,6 +445,8 @@ en:
 
   items:
     something_from: Something from %{shop}
+    shopping_list_field:
+      label: Shopping list
     form:
       name: What is it?
       url: Link
@@ -490,6 +494,7 @@ en:
       save_occasion: Save
       reserve: I'll get this
       split: I'll split this
+      cancel_split: Cancel
       split_with: I'll split this with
       split_others:
         one: 1 other person
@@ -546,6 +551,45 @@ en:
     receipts:
       create:
         received: "%{name} ticked off. It's in your received list if you change your mind."
+
+  shopping_lists:
+    own: Just me
+    index:
+      heading: Shopping lists
+      intro: Share a shopping list with the people you buy gifts with, like a partner. Everyone on it sees what's on it and can tick things off.
+      new: New shopping list
+      empty: You're not sharing a shopping list with anyone yet.
+      rename: Rename
+      you: (you)
+      leave: Leave
+      leave_confirm: Leave %{list}? Anything you picked for it moves to your own list.
+      remove: Remove
+      remove_confirm: Take %{name} off %{list}? Anything they picked for it moves to their own list.
+      add_label: Someone to add to %{list}
+      add_prompt: Add someone…
+      add: Add
+    form:
+      name: Name
+      name_hint: Anything you like, such as Us, or Christmas with Mum.
+      people: Who's it with?
+      people_hint: You can add people later too.
+    new:
+      heading: New shopping list
+      intro: Everyone on it will see what's on it and can tick things off.
+      submit: Make the list
+    create:
+      created: "%{list} is ready."
+    edit:
+      heading: Rename shopping list
+      submit: Save
+    update:
+      renamed: Shopping list renamed.
+    shoppers:
+      create:
+        added: Added %{name} to %{list}.
+      destroy:
+        left: You've left %{list}.
+        removed: Took %{name} off %{list}.
 
   joins:
     rate_limited: Too many tries. Please wait a few minutes and try again.
@@ -776,6 +820,11 @@ en:
         split_incomplete: Wait until everyone has joined the split before buying it.
         too_large: must be smaller than %{size}
         name_or_link: Add a name or a link, so everyone knows what it is.
+        someone_elses_own_list: Only you can be on your own shopping list.
+        cannot_join: "%{name} can't join this list."
+        strangers: Everyone on a shopping list needs to be in a group with everyone else on it.
+        wrong_shopping_list: You can't use that shopping list for gifts to %{name}.
+        shopping_list_already_getting_it: Someone on that shopping list is already getting this.
       models:
         user:
           attributes:

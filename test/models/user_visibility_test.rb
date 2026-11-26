@@ -17,6 +17,13 @@ class UserVisibilityTest < ActiveSupport::TestCase
     assert_includes visible, users(:erin)
   end
 
+  test "someone can be seen by the people in their groups, themselves and whoever looks after them" do
+    memberships(:dan_in_hollies).destroy!
+
+    assert_equal [ users(:alice), users(:bob), users(:dan) ], User.who_can_see(users(:dan)).by_name
+    assert_equal [ users(:carol), users(:erin) ], User.who_can_see(users(:erin)).by_name
+  end
+
   test "guardians see their dependants even outside shared groups" do
     memberships(:dan_in_hollies).destroy!
 

@@ -38,7 +38,7 @@ class Wishlist
   end
 
   def cards
-    @cards ||= shown.map { Item::Card.new(it, wishlist: self, reservations: reservations.fetch(it.id, [])) }
+    @cards ||= shown.map { Item::Card.new(it, wishlist: self, reservations: surprises_hidden? ? [] : it.reservations.to_a) }
   end
 
   def still_wanted_cards
@@ -77,6 +77,10 @@ class Wishlist
     @split_candidates ||= surprises_hidden? ? [] : User.who_can_split_gifts_to(person, with: viewer).to_a
   end
 
+  def shopping_list_choices
+    @shopping_list_choices ||= surprises_hidden? ? [] : viewer.shopping_lists_for_gifts_to(person).to_a
+  end
+
   private
     def unread_counts
       @unread_counts ||= Message.unread_by(viewer).where(subject: chats).group(:subject_id).count
@@ -85,7 +89,7 @@ class Wishlist
     def items
       @items ||= begin
         items = person.items.listed.visible_to(viewer).includes(:suggested_by, photos_attachments: { blob: { variant_records: { image_attachment: :blob } } }).in_list_order
-        surprises_hidden? ? items.where(suggested_by: nil) : items
+        surprises_hidden? ? items.where(suggested_by: nil) : items.includes(reservations: [ :user, :sharers, { occasion: :person, shopping_list: :people, shares: { shopping_list: :people } } ])
       end
     end
 
@@ -95,9 +99,5 @@ class Wishlist
 
     def shown
       little_only? ? wanted.little : wanted
-    end
-
-    def reservations
-      @reservations ||= surprises_hidden? ? {} : Reservation.visible_to(viewer).where(item: shown).includes(:user, :shares, :sharers, occasion: :person).group_by(&:item_id)
     end
 end
